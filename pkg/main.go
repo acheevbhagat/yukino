@@ -72,7 +72,7 @@ func runRefresh(conn net.Conn, cmd []string) {
 	}
 	timeout := 20
 	if len(cmd) > 2 {
-		tout, err := strconv.Atoi(cmd[2])
+		tout, err := strconv.Atoi(strings.TrimSpace(cmd[2]))
 		if err == nil {
 			timeout = tout
 		}
