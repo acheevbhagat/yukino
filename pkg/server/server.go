@@ -14,20 +14,20 @@ var data map[string]string
 
 func main() {
 	data = make(map[string]string)
-    l, err := net.Listen("unix", "/tmp/yukino.sock")
-    if err != nil {
-        println("listen error", err)
-        return
-    }
+	l, err := net.Listen("unix", "/tmp/yukino.sock")
+	if err != nil {
+		println("listen error", err)
+		return
+	}
 
-    for {
-        conn, err := l.Accept()
-        if err != nil {
-            println("accept error", err)
-        }
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			println("accept error", err)
+		}
 
-        go getCommand(conn)
-    }
+		go getCommand(conn)
+	}
 }
 
 func getCommand(conn net.Conn) {
