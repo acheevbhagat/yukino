@@ -1,4 +1,4 @@
-package utils
+package main
 
 import (
 	"fmt"
@@ -6,22 +6,59 @@ import (
 	"os"
 	"io"
 	"unicode"
+	"errors"
 )
 
-func read(filepath string) string {
-	if contents, ok := data[filepath]; ok {
-		return contents
+func readData(filepath string) (FileData, error) {
+	mutex.Lock()
+	successFlag := false
+	err := errors.New("Unknown key")
+	val, ok := data[filepath]
+	if ok {
+		fmt.Println("Key already exists : ", filepath)
+		successFlag = true
 	} else {
-		return refresh(filepath)
+		val = FileData{}	 
+	}
+	mutex.Unlock()
+	if successFlag {
+		return val, nil
+	} else {
+		return val, err
 	}
 }
 
-func refresh(filepath string) string {
+func getMinTimeout() (int) {
+	mutex.Lock()
+	timeout := minTimeout
+	mutex.Unlock()
+	return timeout
+}
+
+func updateData(filepath string, contents string, timeout int) {
+	mutex.Lock()
+	data[filepath] = FileData{Path: filepath, Contents: contents, Timeout: timeout}
+	if timeout < minTimeout {
+		minTimeout = timeout
+	}
+	mutex.Unlock()
+}
+
+func read(filepath string) (string, error) {
+	data, err := readData(filepath)
+	if err != nil {
+		fmt.Println("Key already exists : ", filepath)
+		return data.Contents, nil
+	} else {
+		return "", errors.New("Unknown key") 
+	}
+}
+
+func refresh(filepath string) (string, error) {
 	fmt.Println("Reading : ", filepath)
 	jsonFile, err := os.Open(filepath)
 	if err != nil {
-		fmt.Println("Fatal error : ", err)
-		return ""
+		return "", err
 	}
 	defer jsonFile.Close()
 	r := bufio.NewReader(jsonFile)
@@ -42,6 +79,5 @@ func refresh(filepath string) string {
 			}
 		}
 	}
-	data[filepath] = contents
-	return contents
+	return contents, nil
 }
