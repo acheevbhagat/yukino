@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"bufio"
 	"strings"
-	"encoding/json"
 	"os"
-	"io/ioutil"
+	"io"
+	"unicode"
 )
 
+var data map[string]string
+
 func main() {
+	data = make(map[string]string)
     l, err := net.Listen("unix", "/tmp/yukino.sock")
     if err != nil {
         println("listen error", err)
@@ -31,12 +34,43 @@ func getCommand(conn net.Conn) {
 	message, _ := bufio.NewReader(conn).ReadString('\n')
 	cmd := strings.Split(message, " ")
 	if cmd[0] == "read" {
-		filepath := cmd[1]
-		jsonFile, _ := os.Open(filepath)
+		filepath := strings.TrimSpace(cmd[1])
+		response := read(filepath)
+		fmt.Println(response)
+		fmt.Fprintf(conn, response + "\n")
+	}
+}
+
+func read(filepath string) string {
+	if contents, ok := data[filepath]; ok {
+		return contents
+	} else {
+		fmt.Println("Reading : ", filepath)
+		jsonFile, err := os.Open(filepath)
+		if err != nil {
+			fmt.Println("Fatal error : ", err)
+			return ""
+		}
 		defer jsonFile.Close()
-		byteValue, _ := ioutil.ReadAll(jsonFile)
-		var result map[string]interface{}
-		json.Unmarshal([]byte(byteValue), &result)
-		fmt.Println(result)
+		r := bufio.NewReader(jsonFile)
+		contents := ""
+		for {
+			c, _, err := r.ReadRune()
+			if err != nil {
+				if err == io.EOF {
+					break
+				} else {
+					fmt.Println("Fatal error : ", err)
+				}
+			} else {
+				// Need to do validation as we process each character
+				// to make sure we're reading valid json
+				if !unicode.IsSpace(c) {
+					contents = contents + string(c)
+				}
+			}
+		}
+		data[filepath] = contents
+		return contents
 	}
 }
