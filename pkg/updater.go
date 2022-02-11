@@ -3,9 +3,11 @@ package main
 import (
 	"time"
 	"fmt"
+	"sync"
 )
 
-func updaterService() {
+func updaterService(wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		mutex.Lock()
 		files := make([]FileData, len(data))

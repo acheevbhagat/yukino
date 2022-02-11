@@ -13,18 +13,22 @@ var mutex sync.Mutex
 var data map[string]FileData
 
 func main() {
+	var wg sync.WaitGroup
 	data = make(map[string]FileData)
 	listener, err := net.Listen("unix", "/tmp/yukino.sock")
 	if err != nil {
 		println("listen error", err)
 		return
 	}
-	go updaterService()
-	go runCommand(listener)
+	wg.Add(2)
+	go updaterService(&wg)
+	go runCommand(listener, &wg)
+	wg.Wait()
 }
 
-func runCommand(l net.Listener) {
+func runCommand(l net.Listener, wg *sync.WaitGroup) {
 	fmt.Println("Starting runcommand")
+	defer wg.Done()
 	for {
 		conn, err := l.Accept()
 		if err != nil {
