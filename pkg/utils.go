@@ -47,10 +47,9 @@ func updateData(filepath string, contents string, timeout int) {
 func read(filepath string) (string, error) {
 	data, err := readData(filepath)
 	if err != nil {
-		fmt.Println("Key already exists : ", filepath)
+		return "", errors.New("Unknown key")
+	} else { 
 		return data.Contents, nil
-	} else {
-		return "", errors.New("Unknown key") 
 	}
 }
 

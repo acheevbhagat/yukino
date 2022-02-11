@@ -52,11 +52,7 @@ func runRead(conn net.Conn, cmd []string) {
 		refreshFlag = true
 	}
 	if refreshFlag {
-		response, err = refresh(filepath)
-		if err != nil {
-			fmt.Println("Fatal error : ", err)
-			return
-		}
+		runRefresh(conn, cmd)
 	} else {
 		fmt.Println(response)
 		fmt.Fprintf(conn, response + "\n")
@@ -73,7 +69,7 @@ func runRefresh(conn net.Conn, cmd []string) {
 	timeout := 20
 	if len(cmd) > 2 {
 		tout, err := strconv.Atoi(strings.TrimSpace(cmd[2]))
-		if err == nil {
+		if err != nil {
 			timeout = tout
 		}
 	}
