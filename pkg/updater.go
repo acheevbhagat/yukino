@@ -7,6 +7,7 @@ import (
 )
 
 func updaterService(wg *sync.WaitGroup) {
+	fmt.Println("Starting updater")
 	defer wg.Done()
 	for {
 		mutex.Lock()
