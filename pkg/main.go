@@ -7,40 +7,37 @@ import (
 	"strings"
 	"strconv"
 	"sync"
-	"math"
 )
 
 var mutex sync.Mutex
 var data map[string]FileData
-var minTimeout int
 
 func main() {
 	data = make(map[string]FileData)
-	minTimeout = math.MaxUint32
-	l, err := net.Listen("unix", "/tmp/yukino.sock")
+	listener, err := net.Listen("unix", "/tmp/yukino.sock")
 	if err != nil {
 		println("listen error", err)
 		return
 	}
+	go updaterService()
+	go runCommand(listener)
+}
 
+func runCommand(l net.Listener) {
+	fmt.Println("Starting runcommand")
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			println("accept error", err)
 		}
-
-		go runCommand(conn)
-	}
-}
-
-func runCommand(conn net.Conn) {
-	message, _ := bufio.NewReader(conn).ReadString('\n')
-	cmd := strings.Split(message, " ")
-	if cmd[0] == "read" {
-		runRead(conn, cmd)
-	}
-	if cmd[0] == "refresh" { 
-		runRefresh(conn, cmd)
+		message, _ := bufio.NewReader(conn).ReadString('\n')
+		cmd := strings.Split(message, " ")
+		if cmd[0] == "read" {
+			runRead(conn, cmd)
+		}
+		if cmd[0] == "refresh" { 
+			runRefresh(conn, cmd)
+		}
 	}
 }
 
@@ -73,7 +70,7 @@ func runRefresh(conn net.Conn, cmd []string) {
 			timeout = tout
 		}
 	}
-	updateData(filepath, response, timeout)
+	updateData(filepath, response, int64(timeout))
 	fmt.Println(response)
 	fmt.Fprintf(conn, response + "\n")
 }

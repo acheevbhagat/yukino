@@ -7,6 +7,7 @@ import (
 	"io"
 	"unicode"
 	"errors"
+	"time"
 )
 
 func readData(filepath string) (FileData, error) {
@@ -28,18 +29,14 @@ func readData(filepath string) (FileData, error) {
 	}
 }
 
-func getMinTimeout() (int) {
+func updateData(filepath string, contents string, timeout int64) {
 	mutex.Lock()
-	timeout := minTimeout
-	mutex.Unlock()
-	return timeout
-}
-
-func updateData(filepath string, contents string, timeout int) {
-	mutex.Lock()
-	data[filepath] = FileData{Path: filepath, Contents: contents, Timeout: timeout}
-	if timeout < minTimeout {
-		minTimeout = timeout
+	currtime := time.Now().Unix()
+	data[filepath] = FileData{
+		Path: filepath,
+		Contents: contents,
+		Timeout: timeout,
+		LastUpdated: currtime,
 	}
 	mutex.Unlock()
 }
